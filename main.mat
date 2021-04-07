@@ -1,0 +1,141 @@
+```
+% Image reading
+V = 1:1:3064;
+N = numel(V);
+C = cell(1,N);
+for kk = 1:N
+    F = sprintf('%d.mat',V(kk));
+    S = load(F);
+    C{kk} = S.cjdata.image;
+    M{kk} = S.cjdata.label;
+end
+% Transform uint16 to uint8
+for kk=1:N
+    D{kk}=uint8(255*double(C{kk})/double(max(C{kk}(:))));
+end
+% Transformation to a one-line vector
+for kk=1:N
+    E{kk}=reshape(D{kk}.',1,[]);
+end
+% Cumulative co-occurence Haralick matrix for V4 vecinity
+offsets=[1 0;-1 0; 0 1;0 -1];
+for j=1:length(D)
+    glcm{j}=graycomatrix(D{j},'Offset',offsets,'Symmetric',true);
+    glcm1{j}=reshape(glcm{j},1,[]);
+end
+% Auto-correlogram
+for j=1:length(E)
+    X{j}=xcorr2(E{j});
+    X{j}=reshape(X{j}.',1,[]);
+end
+% CDF
+icdf    = [];
+   ihist   = imhist(im1);
+   ihist=ihist./262144;
+   maxgval = 255;
+   icdf    = zeros(1,maxgval);
+   icdf(1)= ihist(1);
+   for i=2:1:maxgval+1
+      icdf(i) = ihist(i) + icdf(i-1);
+end
+
+% Function used for the Smirnov and Kolmogorov-Smirnov tests
+function [delta, H]=smirnov(x,y)
+x1=x;
+x2=y;
+[rows1 , columns1]  =  size(x1);
+[rows2 , columns2]  =  size(x2);
+if (rows1 ~= 1) & (columns1 ~= 1)
+    error('stats:kstest2:VectorRequired','Sample X1 must be a
+vector.');
+end
+if (rows2 ~= 1) & (columns2 ~= 1)
+    error('stats:kstest2:VectorRequired','Sample X2 must be a vector.');
+end
+x1  =  x1(~isnan(x1));
+x2  =  x2(~isnan(x2));
+x1  =  x1(:);
+x2  =  x2(:);
+if isempty(x1)
+   error('stats:kstest2:NotEnoughData',...
+         'Sample vector X1 is composed of all NaN''s.');
+end
+if isempty(x2)
+   error('stats:kstest2:NotEnoughData',...
+end
+'Sample vector X2 is composed of all NaN''s.');
+end
+
+alpha  =  0.05;
+  tail  =  0;
+
+binEdges    =  [-inf ; sort([x1;x2]) ; inf];
+binCounts1  =  histc (x1 , binEdges);
+binCounts2  =  histc (x2 , binEdges);
+sumCounts1  =  cumsum(binCounts1)./sum(binCounts1);
+sumCounts2  =  cumsum(binCounts2)./sum(binCounts2);
+sampleCDF1  =  sumCounts1(1:end-1);
+sampleCDF2  =  sumCounts2(1:end-1);
+switch tail
+   case  0      %  2-sided test: T = max|F1(x) - F2(x)|.
+      deltaCDF  =  abs(sampleCDF1 - sampleCDF2);
+   case -1      %  1-sided test: T = max[F2(x) - F1(x)].
+      deltaCDF  =  sampleCDF2 - sampleCDF1;
+   case  1      %  1-sided test: T = max[F1(x) - F2(x)].
+      deltaCDF  =  sampleCDF1 - sampleCDF2;
+end
+KSstatistic   =  max(deltaCDF);
+delta
+=  max(deltaCDF);
+n1
+n2
+n= n1 * n2 /(n1 + n2);
+lambda = max((sqrt(n) + 0.12 + 0.11/sqrt(n)) * KSstatistic , 0);
+if tail ~= 0        % 1-sided test.
+   pValue  =  exp(-2 * lambda * lambda);
+else                % 2-sided test (default).
+   j       =  [1:101]';
+   pValue  =  2 * sum((-1).^(j-1).*exp(-2*lambda*lambda*j.^2));
+   if pValue < 0 , pValue = 0; end
+   if pValue > 1 , pValue = 1; end
+   end
+H  =  (alpha >= pValue);
+for j=1:length(E)
+    X{j}=xcorr2(E{j});
+    X{j}=reshape(X{j}.',1,[]);
+end
+for i=1:length(E)
+    for j=1:length(E)
+    [delta(i,j) H(i,j)]=smirnov(E{i},E{j});
+    end
+end
+for i=1:length(glcm1)
+   for j=1:length(glcm1)
+   [delta1(i,j) H1(i,j)]=smirnov(glcm1{i},glcm1{j});
+end end
+for i=1:length(X)
+   for j=1:length(X)
+   [delta2(i,j) H2(i,j)]=smirnov(X{i},X{j});
+   end
+end
+% Aplicarea functiei smirnov
+S=D{5}-D{6};
+figure,plot(imhist(S));
+Z=im2double(S);
+Z=Z(:);
+S1=S(:);
+Sr=reshape(S1.',1,[]);
+h=imhist(S);
+for i=1:length(Z)
+    if Z(i)== 0
+        Z(i)=1;
+end end
+% Lognormal distribution
+q1=makedist('Lognormal','mu',0,'sigma',2);
+a=0:1:255;
+pdf55=pdf(q1,a);
+figure,plot(a,pdf55),title('Lognormal distribution')
+hold on
+plot(a,h);
+pd3=lognfit(Z,0.05);
+```
