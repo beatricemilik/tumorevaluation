@@ -1,4 +1,3 @@
-```
 % Image reading
 V = 1:1:3064;
 N = numel(V);
@@ -138,4 +137,3 @@ figure,plot(a,pdf55),title('Lognormal distribution')
 hold on
 plot(a,h);
 pd3=lognfit(Z,0.05);
-```
